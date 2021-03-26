@@ -1,18 +1,26 @@
 {
-  "name": "SortaServer",
+  "name": "sortaserver",
   "version": "1.0.0",
-  "description": "",
+  "description": "run physics on server",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
+  "author": "tussiez",
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.1",
     "nodejs-physijs": "^0.1.5",
     "socket.io": "^4.0.0",
     "three": "^0.126.1"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tussiez/SortaServer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tussiez/SortaServer/issues"
+  },
+  "homepage": "https://github.com/tussiez/SortaServer#readme"
 }
