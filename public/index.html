@@ -3,24 +3,372 @@
   <body>
     <head>
       <title>
-        SortaServer Demo
+        Client
       </title>
       <Style>
         body {
           margin: 0;
           padding: 0;
           overflow: hidden;
-        }
-        #info {
-          position: absolute;
-          left: 1%;
-          top: 1%;
           color: white;
           font-family: Arial;
         }
-        </style>
+        #textCanvas {
+          z-index: 4;
+          pointer-events: none;
+        }
+        #webgl_canvas {
+          position: absolute;
+          top:0;
+          left:0;
+          z-index: 1 !important;
+        }
+        #info {
+          position: absolute;
+          left: 31%;
+          top: 1%;
+          display: inline-block;
+          z-index:3;
+        }
+        #chatbox {
+          position: absolute;
+          left:1%;
+          top:1%;
+          height: 30%;
+          width: 30%;
+          background-color: rgba(64,64,64, 0.7);
+          border: 1px solid black;
+          z-index: 3;
+          overflow: none;
+        }
+        #team_prompt {
+          position: absolute;
+          height: 100%;
+          width: 100%;
+          left: 0;
+          top: 0;
+          border-radius: 2px;
+          background-color: rgba(64,64,64,0.98);
+          z-index: 999;
+          overflow: auto;
+        }
+        .centered {
+          position: relative;
+          left: 35%;
+          top: 15%;
+          height: 30%;
+          width: 30%;
+          transition: 0.5s;
+        }
+        a {
+          color: gray;
+        }
+        a:hover {
+          text-decoration: none;
+        }
+        .chat_msg {
+          padding: 2px;
+          margin: 1px;
+        }
+        #logger {
+          height: 100px;
+          width: 150px;
+          border: 1px solid gray;
+          overflow: auto;
+
+        }
+        #center {
+          height: 30%;
+          width: 30%;
+          position: absolute;
+          left: 35%;
+          top: 35%;
+          text-align: center;
+          background-color: #333;
+          border-radius: 10px;
+          display: none;
+          z-index: 2;
+        }
+        #header {
+          z-index: 999;
+          background-color: black;
+          width: 100%;
+          text-align: center;
+          padding: 2px;
+          position: absolute;
+          top:0;
+          left: 0;
+        }
+        .inner {
+          margin: 4px;
+          padding: 4px;
+        }
+        #driving_controls {
+          height: 38%;
+          width: 20%;
+          z-index: 2;
+          position: fixed;
+          background-color: black;
+          border-radius: 2px;
+          color: white;
+          left: 0;
+          bottom: 0;
+          display: none;
+          font-size: 1vw;
+          margin: 4px;
+        }
+        button {
+          padding: 3px;
+          margin: 3px;
+          background-color: #222;
+          color: white;
+          border: 1px solid white;
+        }
+        #driving_controls button {
+          font-size: 1vw;
+        }
+        
+        #page1 {
+          display: block;
+        }
+        #page2 {
+          display: none;
+        }
+        button:hover {
+          cursor: pointer;
+        }
+        #chatbox_input {
+          width: 28%;
+          margin-left: 2px;
+          background-color: white;
+          color: black;
+          z-index: 999;
+          position: fixed;
+          top: 32%;
+          left:1%;
+        }
+        #chatbox_inner {
+          overflow: auto;
+          height: 97%;
+        }
+        button:disabled {
+          background-color: gray;
+          cursor: not-allowed;
+        }
+        .loader_outer {
+          height:16px;
+          width: 30%;
+          margin: 2px;
+          border: 1px solid gray;
+        }
+        .loader {
+          height: 16px;
+          width: 1px;
+          background-color: white;
+        }
+#connecting {
+  z-index: 1000;
+  position: absolute;
+  left: 49%;
+  top: 49%;
+}
+.loader_circle {
+  border: 12px solid #222;
+  border-radius: 50%;
+  border-top: 12px solid white;
+  width: 75px;
+  height: 75px;
+  animation: spin 3s linear infinite;
+  /*animation-timing-function: linear;*/
+  text-align: center;
+  box-shadow: 2px 1px 1px 2px black;
+  text-shadow: 1px 1px black;
+}
+.loading_center {
+color: white;
+font-family: Arial;
+position: relative;
+font-size: 16px;
+top: calc(50% - 8px);
+}
+.leaderboard {
+  width: 20%;
+  background-color: rgba(64,64,64,0.9);
+  border-radius: 5px;
+  z-index: 1000;
+  position: fixed;
+  top: 0;
+  right: 0;
+  max-height: 40%;
+  overflow: auto;
+}
+.leaderboard table {
+  width: 100%;
+  font-size: 1vw;
+}
+table, td, tr {
+  border: 1px solid white;
+  border-collapse: collapse;
+}
+td,tr, th {
+  padding: 2px;
+  margin: 2px;
+}
+.point {
+  position: fixed;
+  z-index: 10000;
+  bottom: 0;
+  right: 0;
+  font-size: 1vw;
+  background-color: rgba(64,64,64,0.8);
+}
+.point table {
+  margin: 4px;
+  padding: 4px;
+}
+
+.circle {
+  width: 6vw;
+  height: 6vw;
+  border-radius: 50%;
+  background-color: #444;
+}
+.circle .needle {
+  background-color: red;
+  height: 8vh;
+  width: 4px;
+  position: relative;
+  left: calc(50% - 2px);
+  top: calc(50% - 4vh);
+  transform: rotate(-90deg);
+}
+.circle .needle .tip {
+  background-color: white;
+  height: 5%;
+  width: 100%;
+}
+
+#gear {
+  float: right;
+}
+@keyframes spin {
+  0% { 
+  transform: rotateZ(0deg) rotateY(0deg) rotateX(0deg);
+ }
+ 50% {transform: rotateZ(180deg) rotateY(270deg) rotateX(270deg)}
+  100% { 
+  transform: rotateZ(0deg) rotateY(360deg) rotateX(0deg);
+ }
+}
+</style>
+
+
+
     </head>
-    <div id="info"></div>
+<canvas id="textCanvas"></canvas>
+    <div id="header">
+      <span>Armored Patrol 0.5</span>
+    </div>
+    <div class="point">
+      <table id="pointCount">
+        <tbody>
+          <tr>
+            <td>.</td>
+            <td><span style="font-weight:bold;color:red">Red</span></td>
+            <td><span style="font-weight:bold;color: blue">Blue</span></td>
+            </tr>
+          <tr>
+            <td>points/min</td>
+            <td id="pointsMinRed">0</td>
+            <td id="pointsMinBlue">0</td>
+          </tr>
+          <tr>
+            <td>total</td>
+            <td id="pointsRed">0</td>
+            <td id="pointsBlue">0</td>
+          </tr>
+          <tr>
+            <td style="text-align: center; font-weight: bold" id="timeRemaining">Time left: 15:00</td>
+          </tr>
+
+          </tbody>
+      </table>
+    </div>
+    <div class="leaderboard">
+      <div class="inner">
+        <table id="leader">
+          <tbody>
+          <th>Leaderboard</th>
+          <tr>
+            <td>Team</td>
+            <td>Name</td>
+            <td>Points</td>
+            <td>Level</td>
+
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="loader_circle" id="connecting"><Div class="loading_center">Connecting..</Div></div>
+    <div id="team_prompt">
+      <Div class="centered" id="page2">
+        <div class="inner">
+          <h3>Before playing..<span style="float: right;font-size: 16px"><b><a href="#!"style="color:white"onclick="document.getElementById('page2').style.display='none';document.getElementById('page1').style.display='block'">Back</a></b></span></h3>
+        <p>Type a username:</p>
+        <input type="text" id="username" autocomplete="off" placeholder="Username.." onChange="if(this.value.split('').some((e => {return !'abcdefghijklmnopqrstuvwxyz0123456789_'.split('').includes(e)}))) {document.getElementById('warning_alphanumeric').style.display = 'inline'; this.value = this.value.replace(/[^a-z0-9]/gi,''); event.preventDefault();event.stopPropagation();} else {document.getElementById('warning_alphanumeric').style.display = 'block'}"><p><span id="warning_alphanumeric" style="color: yellow; display: block;">The game might break if you use non-English alphanumeric characters (!a-Z[0-9]). No spaces!</span>
+        <p>Pick a team:</p>
+        <button id="redteambt" onclick="document.getElementById('blueteambt').disabled = false; this.disabled=true; this.style.backgroundColor = '#ff6666';document.getElementById('blueteambt').style.backgroundColor='#222'">Red</button><br><button id="blueteambt" onclick="document.getElementById('redteambt').disabled = false; this.disabled=true;this.style.backgroundColor = '#4db8ff';document.getElementById('redteambt').style.backgroundColor='#222'">Blue</button>
+
+
+        <p> Once you've finished, hit <button onclick="if(document.getElementById('username').value != '' && document.getElementById('blueteambt').disabled == true || document.getElementById('redteambt').disabled == true && document.getElementById('username').value != '' && document.getElementById('username').value.length <= 12) {window.setPlayerInfo(document.getElementById('username').value, document.getElementById('blueteambt').disabled == true ? 'blue' : 'red')} else {alert('Type a username and choose a team first! \n Your name can only be up to twelve characters long.')}" id="playbt" disabled="true">Play</button> to start!</p>
+        
+        </div>
+      
+      </div>
+      <div class="centered" id="page1">
+      <div class="inner">
+        
+      <h3>Armored Patrol!<span style="float: right;font-size: 16px"><b><a href="#!"style="color:white"onclick="document.getElementById('page1').style.display='none';document.getElementById('page2').style.display='block'">Next</a></b></span></h3>
+      <p>This is a browser-based ripoff of "Armored Patrol 0.9", a Roblox game. Initally developed as a demo of <a href="https://replit.com/@tussiez">@tussiez</a>'s multiplayer physics engine.</p>
+      <b>Description</b>
+      <p>Drive tanks and fire away at the opposing team to claim bases. The more bases you have control over, the more points you earn. The team with the most points win. Matches are fifteen minutes long.<p>
+      <b>How to Play</b>
+      <p>Most controls are explained in the game.<Br>
+      Use WASD to move around. Click and drag to look around.<br>Use Q to enter nearby vehicles.</p>
+      </div>
+      </div>
+    </div>
+    <div id="chatbox">
+      <Div id="chatbox_inner" class="inner"></div>
+      <input type="text" id="chatbox_input" onkeydown="window.sendMessage(event)" placeholder="Click here or press / to type">
+    </div>
+    <div id="driving_controls">
+      <div class="inner">
+        Driver Controls <hr>
+        <b>WASD</b> to move. <b>Shift</b> to brake. <b>Space</b> to exit. E/Q to switch gear.<Br>
+       <button onclick="if(window.isManual === false){window.isManual = true; this.innerHTML = 'Transmission Mode: MANUAL'} else {window.isManual = false; this.innerHTML = 'Transmission Mode: AUTO'}">Transmission Mode: AUTO</button><br>
+        <button onclick="window.removeVehicle()">DELETE VEHICLE</button><button onclick="window.flipVehicle()">Flip Vehicle</button>
+        <p id="vehicle_info">
+  <div class="circle">
+    <div class="needle" id="rpm">
+      <div class="tip"></div>
+    </div>
+    <div id="gear">D0</div>
+    </div>
+        </p>
+        </div>
+    </div>
+    <div id="center">
+      <h3>Unable to connect</h3>
+      <p>You may have a slow Internet connection, or the server is down. <hr>Please try again later.</p>
+      </div>
+    <div id="info">
+      <!-- <input type="text" placeholder="Run command here.." onkeydown="runCommand(this.value,event)"> -->
+     <!-- <div id="inf2"></div> -->
+      <div id="logger"></div> 
+    </div>
+    <script src="lib/physi_three.js"></script>
     <script src="/tween.js"></script>
     <Script src="/socket.io/socket.io.js"></script>
     <script src="script.js" type="module"></script>
