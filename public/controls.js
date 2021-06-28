@@ -16,6 +16,7 @@ let PointerLockControls = function (camera, domElement, socket) {
   var vec = new Vector3();
 
   this.lastVelocity = new Vector3();
+  this.velocDir = new Vector3();
 
   function onMouseMove(event) {
     if(scope.isLocked == true) {
@@ -65,6 +66,7 @@ let PointerLockControls = function (camera, domElement, socket) {
     //v.addScaledVector(vec, distance);
 
     // update
+    scope.velocDir.addScaledVector(vec,distance);
     socket.volatile.emit('client_addVelocity', vec,distance, Math.abs(distance))
     }
 
@@ -75,6 +77,7 @@ let PointerLockControls = function (camera, domElement, socket) {
     vec.setFromMatrixColumn(camera.matrix, 0);
     //var v = new Vector3() //.copy(scope.lastVelocity);
     //v.addScaledVector(vec, distance);
+        scope.velocDir.addScaledVector(vec,distance);
 
     socket.volatile.emit('client_addVelocity',vec,distance, Math.abs(distance))
     }

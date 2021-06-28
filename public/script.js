@@ -5,6 +5,7 @@ import Grapher from 'https://sortagrapher.sortagames.repl.co/lib.js';
 import PointerLockControls from '/controls.js';
 import SpriteTex from '/spritetext.js'
 import {OrbitControls} from 'https://threejs.org/examples/jsm/controls/OrbitControls.js';
+import {GLTFLoader} from 'https://threejs.org/examples/jsm/loaders/GLTFLoader.js';
 
 if(window !== window.parent) {
   //Template literals are better - Baocnman321
@@ -33,7 +34,7 @@ if(e.key === 'Enter'){
   }
 }
 }
-let camera,scene,renderer,controls,objects = [],objID = [], fps = 0, serverFPS, lastPing = 0, ping = 0, serverFrame = 0, serverRelativeFPS = 0, drivingVehicle = false,pointerLocked =false,clientObj, canJump = true, background, SpriteText, orbitControls, previousPos, playerName, playerTeam, canMove = false, pingArray = [], avgPing = 0,lastServFrame = 0,sceneHasLoadedYes = false,lastRedTeamPoints = 0, lastBlueTeamPoints = 0, mouse = new THREE.Vector2(), mousePos = new THREE.Vector3(), mouseDir = new THREE.Vector3();
+let camera,scene,renderer,controls,objects = [],objID = [], fps = 0, serverFPS, lastPing = 0, ping = 0, serverFrame = 0, serverRelativeFPS = 0, drivingVehicle = false,pointerLocked =false,clientObj, canJump = true, background, SpriteText, orbitControls, previousPos, playerName, playerTeam, canMove = false, pingArray = [], avgPing = 0,lastServFrame = 0,sceneHasLoadedYes = false,lastRedTeamPoints = 0, lastBlueTeamPoints = 0, mouse = new THREE.Vector2(), mousePos = new THREE.Vector3(), mouseDir = new THREE.Vector3(),gltfLoader,playerModel,tClock = new THREE.Clock();
 
 window.isManual = false;
 //"const" instead of "let" (because you aren't reassigning it). Also use "dcocument.querySelector()" instead - Baconman321
@@ -384,6 +385,9 @@ const movePlayer = () => {
         socket.emit('client_exitVehicle'); // exit vehicle
       }
     }
+  
+    controls.velocDir.set(0,0,0);
+
     if(keys.has('/')) {
       chatboxInput.focus(); // chat
     }
@@ -399,12 +403,25 @@ const movePlayer = () => {
     if(keys.has('d')) {
       controls.moveRight(5)
     }
+    if(keys.has('w')||keys.has('a')||keys.has('s')||keys.has('d')) {
+      if(clientObj && clientObj.children[0]) {
+        for(let act of playerModel._modelAnimations) {
+          clientObj.children[0]._aniMixer.clipAction(act).play();
+        }
+      }
+    } else {
+      if(clientObj && clientObj.children[0]) {
+        clientObj.children[0]._aniMixer.stopAllAction();
+      }
+    }
     if(keys.has(' ')) {
       if(canJump == true) {
         canJump = false;// now wait for next collision till we can jump
         socket.emit('client_applyCentralImpulse', new THREE.Vector3(0,4,0)); // jump!
       }
     }
+    
+   
   }
   }
 }
@@ -419,6 +436,20 @@ const render = () => {
   if(scene.simulate(1000/serverRelativeFPS,1) != false) {
   //  lastServFrame++; // advance simulation
   }
+
+  // animation update
+  let delt = tClock.getDelta();
+  if(playerModel && playerModel._aniMixer && clientObj) {
+    for(let ob of objects) {
+      if(ob._isAPlayer === true) {
+        if(ob._isModel === true) {
+        ob.children[0]._aniMixer.update(delt);
+        }
+      }
+    }
+  }
+
+
   renderer.render(scene,camera);
 }
 
@@ -485,12 +516,24 @@ const init = () => {
     SpriteText.sc.setSize(window.innerWidth, window.innerHeight);
   })
 
-
+  loadPlayerModel();
   getFPS();
   setInterval(logPing, 50);
   setInterval(updateCounters,250);
   render();
   };
+}
+
+const loadPlayerModel = () => {
+  gltfLoader = new GLTFLoader();
+  gltfLoader.load('/aplayer.glb', (mod) => {
+    playerModel = mod.scene.children[0];
+    playerModel.scale.set(0.5,0.5,0.5);
+    playerModel._aniMixer = new THREE.AnimationMixer(playerModel);
+    playerModel._modelAnimations = mod.animations;
+    playerModel._isModel = true;
+
+  });
 }
 
 
@@ -569,6 +612,24 @@ socket.on('simulate', (dat) => {
       if(obj.playerId == socketId) {
         clientObj = ob;
         controls.lastVelocity.set(obj.lastLinVeloc.x,obj.lastLinVeloc.y,obj.lastLinVeloc.z);
+      }
+      if(obj.playerId != undefined) {
+        ob._isAPlayer = true;
+        // player
+        // do we have model ready?
+        if(playerModel) {
+          if(ob._isModel === undefined) { //not already a model?
+          ob.material.transparent = true;
+            ob.material.opacity = 0;
+            ob.add(playerModel.clone());
+            ob.children[0].position.y = -1;
+            ob.children[0]._aniMixer = new THREE.AnimationMixer(ob.children[0]);
+            for(let ani of playerModel._modelAnimations) {
+              ob.children[0]._aniMixer.clipAction(ani).play();
+            }
+            ob._isModel = true;
+          }
+        }
       }
       if(obj._vehicleClientInfo) {
         if(obj._vehicleClientInfo.socketId == socketId) {
