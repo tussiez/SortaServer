@@ -156,7 +156,7 @@ const Vehicle = function (Physijs, scene, Vector3, ObjectParams) {
         car.throttleHoldTime += 0.04;
         if(car.throttleHoldTime > 1) car.throttleHoldTime = 1;
         car.throttle += (car.enginePower/500)*(car.throttleHoldTime);
-        car.rpm += ((car.enginePower*5)*(car.throttleHoldTime))/(car.gearShiftRPM[car.gear]/1000)*(car.speed/10);
+        car.rpm += ((car.enginePower*5)*(car.throttleHoldTime))/(car.gearShiftRPM[car.gear]/1000)*(car.speed*10);
         if(car.rpm > car.maxEngineRPM) car.rpm = car.maxEngineRPM; // capped
         if(car.throttle > 1) car.throttle = 1;
       } else {
