@@ -57,8 +57,12 @@ const SortaAccounts = {
           // 200 - OK
           res.json().then(txt => {
             // Done!
+            infoDisp.style.color = 'green';
+            infoDisp.innerHTML = 'Logged in!';
+            setTimeout(() => {
             document.body.removeChild(wrap);
-            resolve(true);
+            resolve(usernameVal);
+            },2000);
           }).catch(err => {
             
           })
@@ -68,11 +72,15 @@ const SortaAccounts = {
           submitButton.disabled = true;
           setTimeout(() => {
             document.body.removeChild(wrap);
-            resolve(false);
+            resolve({err:'server'});
           },3000);
           if(res.status === 403) {
+            infoDisp.style.color = 'yellow';
+            infoDisp.innerHTML = 'Incorrect username or password.';
+            setTimeout(() => {
             document.body.removeChild(wrap);
-            resolve(false);
+            resolve({err:'account'});
+            },3000);
           }
         }
       })

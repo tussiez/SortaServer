@@ -1,6 +1,6 @@
 import * as THREE from '/three.module.js';
 import Physijs from '/lib/physi.js';
-
+import SortaAccounts from '/login.js';
 import Grapher from 'https://sortagrapher.sortagames.repl.co/lib.js';
 import PointerLockControls from '/controls.js';
 import SpriteTex from '/spritetext.js'
@@ -50,6 +50,20 @@ let pointsRedEle = document.querySelector('#pointsRed');
 let pointsBlueEle = document.querySelector('#pointsBlue');
 let keys = new Set();
 let socketId = Math.random();
+
+// SortaAccounts login
+window.useSortaAccounts = function(bt,uu) {
+  SortaAccounts.login().then(resp => {
+    if(typeof resp.err === 'undefined') {
+      uu.value = resp;
+    } else {
+      if(resp.err == 'server') bt.disabled = true;
+    // if incorrect, allow to try again
+    }
+  })
+}
+
+
 window.addEventListener('onload', () => {
   connectingDiv.style.display = 'none'; // done pageload
   playbt.disabled = false; // not disabled;

@@ -316,6 +316,7 @@ td,tr, th {
         <div class="inner">
           <h3>Before playing..<span style="float: right;font-size: 16px"><b><a href="#!"style="color:white"onclick="document.getElementById('page2').style.display='none';document.getElementById('page1').style.display='block'">Back</a></b></span></h3>
         <p>Type a username:</p>
+        <button onclick="window.useSortaAccounts(this, document.getElementById('username'))">SortaGames Login</button><br>
         <input type="text" id="username" autocomplete="off" placeholder="Username.." onChange="if(this.value.split('').some((e => {return !'abcdefghijklmnopqrstuvwxyz0123456789_'.split('').includes(e)}))) {document.getElementById('warning_alphanumeric').style.display = 'inline'; this.value = this.value.replace(/[^a-z0-9]/gi,''); event.preventDefault();event.stopPropagation();} else {document.getElementById('warning_alphanumeric').style.display = 'block'}"><p><span id="warning_alphanumeric" style="color: yellow; display: block;">The game might break if you use non-English alphanumeric characters (!a-Z[0-9]). No spaces!</span>
         <p>Pick a team:</p>
         <button id="redteambt" onclick="document.getElementById('blueteambt').disabled = false; this.disabled=true; this.style.backgroundColor = '#ff6666';document.getElementById('blueteambt').style.backgroundColor='#222'">Red</button><br><button id="blueteambt" onclick="document.getElementById('redteambt').disabled = false; this.disabled=true;this.style.backgroundColor = '#4db8ff';document.getElementById('redteambt').style.backgroundColor='#222'">Blue</button>
