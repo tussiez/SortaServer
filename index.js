@@ -339,6 +339,8 @@ const simulatePhysics = () => {
 			}
 			let cla = new THREE.Vector3().copy(plyr.obj.getLinearVelocity()).clamp(new THREE.Vector3(-5, -100, -5), new THREE.Vector3(5, 60, 5));// clamp it
 			plyr.obj.setLinearVelocity(cla);
+      plyr.obj.setAngularVelocity({x:0,y:0,z:0}); // reset sphere
+      plyr.obj.rotation.set(0,0,0); // reset rotation for character controller
       if(plyr.teamSet === true) {
         // check if in other base
         let po = plyr.team === 'blue' ? new THREE.Vector3(-125,0,-125) : new THREE.Vector3(125,0,125);
@@ -452,10 +454,12 @@ io.on('connection', (socket) => {
     nameSet: false,
     teamSet: false,
 	});
+  let theTempPlayerGeo = boxGeometry(1,2,1);
+  theTempPlayerGeo.computeBoundingSphere = () => {theTempPlayerGeo.boundingSphere = {radius:1}};
 	let plyr = getPlayerByToken(socketToken);
 	plyr.obj = new ObjectParams(
-		new Physijs.BoxMesh(
-			boxGeometry(1, 1, 1),
+		new Physijs.SphereMesh(
+			theTempPlayerGeo,
 			phongMaterial({ color: 'blue' }),
 			1
 		)
