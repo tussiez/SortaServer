@@ -12,6 +12,13 @@ const SortaAccounts = {
 
     wrap.appendChild(header);
 
+    let closeBt = document.createElement('a');
+    closeBt.setAttribute('style','color:white;float:right');
+    closeBt.setAttribute('href','javascript:');
+    closeBt.innerHTML = 'Close';
+
+    wrap.appendChild(closeBt);
+
     let hr = document.createElement('hr');
     wrap.appendChild(hr);
 
@@ -44,6 +51,7 @@ const SortaAccounts = {
     let infoDisp = document.createElement('span');
     infoDisp.innerHTML = 'Type in your username and password.';
     wrap.appendChild(infoDisp);
+
 
     submitButton.onclick = () => {
      let usernameVal = usernameInput.value;
@@ -93,6 +101,11 @@ const SortaAccounts = {
 
 
     document.body.appendChild(wrap);
+
+
+    closeBt.onclick = () => {
+      document.body.removeChild(wrap);
+    }
     });
   }
 }
