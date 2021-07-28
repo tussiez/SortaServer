@@ -34,7 +34,7 @@ if(e.key === 'Enter'){
   }
 }
 }
-let camera,scene,renderer,controls,objects = [],objID = [], fps = 0, serverFPS, lastPing = 0, ping = 0, serverFrame = 0, serverRelativeFPS = 0, drivingVehicle = false,pointerLocked =false,clientObj, canJump = true, background, SpriteText, orbitControls, previousPos, playerName, playerTeam, canMove = false, pingArray = [], avgPing = 0,lastServFrame = 0,sceneHasLoadedYes = false,lastRedTeamPoints = 0, lastBlueTeamPoints = 0, mouse = new THREE.Vector2(), mousePos = new THREE.Vector3(), mouseDir = new THREE.Vector3(),gltfLoader,playerModel,tClock = new THREE.Clock();
+let camera,scene,renderer,controls,objects = [],objID = [], fps = 0, serverFPS, lastPing = 0, ping = 0, serverFrame = 0, serverRelativeFPS = 0, drivingVehicle = false,pointerLocked =false,clientObj, canJump = true, background, SpriteText, orbitControls, previousPos, playerName, playerTeam, canMove = false, pingArray = [], avgPing = 0,lastServFrame = 0,sceneHasLoadedYes = false,lastRedTeamPoints = 0, lastBlueTeamPoints = 0, mouse = new THREE.Vector2(), mousePos = new THREE.Vector3(), mouseDir = new THREE.Vector3(),gltfLoader,playerModel,tClock = new THREE.Clock(),drivingPlane = false;
 
 window.isManual = false;
 //"const" instead of "let" (because you aren't reassigning it). Also use "dcocument.querySelector()" instead - Baconman321
@@ -49,6 +49,7 @@ let leaderboard = document.querySelector('#leader');
 let timeRemaining = document.querySelector('#timeRemaining');
 let pointsRedEle = document.querySelector('#pointsRed');
 let pointsBlueEle = document.querySelector('#pointsBlue');
+let flyingControls = document.querySelector('#flying_controls');
 let keys = new Set();
 let socketId = Math.random();
 
@@ -175,6 +176,21 @@ socket.on('client_driveVehicle', (bo) => {
   }
 });
 
+socket.on('client_drivePlane', (bool) => {
+  if(bool === true) {
+    drivingPlane = true;
+    flyingControls.style.display = 'block';
+  }
+  if(bool === false) {
+    flyingControls.style.display = 'none';
+    drivingPlane = false;
+  }
+});
+
+window.removePlane = () => {
+  socket.emit('client_deletePlane');
+}
+
 window.removeVehicle = () => {
   socket.emit('client_deleteVehicle'); // delete vehicle
 }
@@ -208,9 +224,9 @@ pingGrapher.sortacanvas.add(pingText)
 fpsGrapher.sortacanvas.add(fpsText);
 window.sendMessage = (e) => {
   if(e.key === "Enter") {
-  socket.emit('chat', e.target.value); // send 
+  socket.emit('chat', e.target.value); // send
   chatboxInput.value = ""; // clear
-  chatboxInput.blur(); // unselect 
+  chatboxInput.blur(); // unselect
   }
 }
 chatboxInput.onfocus = () => {
@@ -228,6 +244,8 @@ const onLostConnection = () => {
       connectingDiv.style.display = 'block'; //loading circl
       playbt.disabled = true; // disabled, cannot play
       drivingControls.style.display = 'none'; // not drivin
+      drivingPlane = false;
+      flyingControls.style.display = 'none';
       emptyLeaderboard();//fix
 }
 const onReconnect = () => {
@@ -263,7 +281,7 @@ socket.on('missingParameters', () => {
   infLogger.scrollBy(0,100)
 });
 
-document.body.addEventListener('keydown', (e) =>{ 
+document.body.addEventListener('keydown', (e) =>{
   keys.add(e.key.toLowerCase());
   if(sceneHasLoadedYes == true) {
     // fire?
@@ -280,7 +298,7 @@ document.body.addEventListener('keydown', (e) =>{
       {
        // material
        name: 'basic',
-       color: {r: 1, g: 0, b: 0} 
+       color: {r: 1, g: 0, b: 0}
       },
       0.01, // mass
       //pos
@@ -303,7 +321,7 @@ document.body.addEventListener('keydown', (e) =>{
     }
   }
 });
-document.body.addEventListener('keyup', (e) => { 
+document.body.addEventListener('keyup', (e) => {
   keys.delete(e.key.toLowerCase())
 
 })
@@ -356,6 +374,30 @@ const controlVehicle = () => {
   socket.emit('client_controlVehicle', direction, power, brake, trans);
 }
 
+const controlPlane = () => {
+  let vec = new THREE.Vector3();
+  if(keys.has('q')) {
+    vec.y = -0.5;
+  }
+  if(keys.has('e')) {
+    vec.y = 0.5;
+  }
+  if(keys.has('w')) {
+    vec.x += 0.5;
+  }
+  if(keys.has('s')) {
+    vec.x -= 0.5;
+  }
+  if(keys.has('a')) {
+    vec.z -= 0.5;
+  }
+  if(keys.has('d')) {
+    vec.z+=0.5;
+  }
+  vec.multiplyScalar(2);
+  socket.emit('client_controlPlane', vec);
+}
+
 const movePlayer = () => {
   if(clientObj) {
     window.clientObj = clientObj;
@@ -372,11 +414,17 @@ const movePlayer = () => {
     if(drivingVehicle == true) {
       controlVehicle();
     }
+    if(drivingPlane == true) {
+      controlPlane();
+    }
     // drive vehicle
 
     if(keys.has('q')) {
       if(drivingVehicle == false) {
       socket.emit('client_driveVehicle'); // drive nearby empty vehicle
+      }
+      if(drivingPlane == false) {
+        socket.emit('client_drivePlane'); // Drive nearby empty plane
       }
       keys.delete('q'); // hmm
     }
@@ -384,8 +432,11 @@ const movePlayer = () => {
       if(drivingVehicle == true) {
         socket.emit('client_exitVehicle'); // exit vehicle
       }
+      if(drivingPlane == true) {
+        socket.emit('client_exitPlane');
+      }
     }
-  
+
     controls.velocDir.set(0,0,0);
 
     if(keys.has('/')) {
@@ -420,8 +471,8 @@ const movePlayer = () => {
         socket.emit('client_applyCentralImpulse', new THREE.Vector3(0,4,0)); // jump!
       }
     }
-    
-   
+
+
   }
   }
 }
@@ -468,7 +519,7 @@ const init = () => {
   scene.onLoad = () => {
     sceneHasLoadedYes = true;
       scene.setGravity(new THREE.Vector3(0,-9.87,0)); // correct gravsss
-  
+
   renderer = new THREE.WebGLRenderer();
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -539,14 +590,14 @@ const loadPlayerModel = () => {
 
 const logPing = () => {
    pingLog.log(pingLog.mapNumber(avgPing,0,150));
-   // update pong 
+   // update pong
    pingArray.push(ping);
    if(pingArray.length > 50) pingArray.shift();
 
    let ad = 0;
    for(let pi of pingArray) ad += pi;
    avgPing = ad/pingArray.length;
-      
+
 }
 const updateCounters = () => {
   pingText.text = `Ping: ${ping.toFixed(1)}ms`;
@@ -595,7 +646,7 @@ socket.on('simulate', (dat) => {
 
 
   if(dat.frame > lastServFrame) {
-    
+
   for(let i = 0; i < dat.objects.length; i++){
     let obj = dat.objects[i];
     if(!objID.includes(obj.id)) {
@@ -672,7 +723,7 @@ socket.on('simulate', (dat) => {
         ob.position.copy(fr);
       });
       ob.tweenPos = tween;
-      
+
       if(ob.tweenRot != undefined) ob.tweenRot.stop();
       let dist2 = Math.abs(ob.rotation.toVector3(new THREE.Vector3()).distanceTo(new THREE.Vector3(obj.rotation.x,obj.rotation.y,obj.rotation.z)));
       let tween2 = new TWEEN.Tween(ob.rotation).to(obj.rotation, dist2).start()
@@ -719,7 +770,7 @@ const removeObjects = (gr) => {
 
         // remove from arrays
         objID.splice(objID.indexOf(obj.__serverObjectID),1);
-        objects.splice(i, 1); // delete this object 
+        objects.splice(i, 1); // delete this object
         if(i > 0) i -=1;
         }
       }
@@ -772,7 +823,7 @@ const makeObject = (obj)=> {
       mat.map.repeat.set(obj.textureRepeat,obj.textureRepeat)
 
     }
-    
+
   }
   if(obj.geometry.name == 'box'){
     geo = new geometries.box(obj.geometry.height,obj.geometry.width,obj.geometry.depth);
@@ -788,7 +839,7 @@ const makeObject = (obj)=> {
     geo.rotateX(obj.geometry.rotation[0]); // rotation
     geo.rotateY(obj.geometry.rotation[1]);
     geo.rotateZ(obj.geometry.rotation[2]);
-    
+
   }
   let tai = obj._doNotSimulate === true ? THREE.Mesh : physiMesh[obj.geometry.name];
   ob = new tai(
@@ -823,4 +874,3 @@ const makeObject = (obj)=> {
 }
 
 } // closing else
-

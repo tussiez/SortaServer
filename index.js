@@ -14,6 +14,7 @@ let vehicles = [];
 let bases = []; // bases
 let redTeamPoints = 0;
 let blueTeamPoints = 0;
+let planes = [];
 io.use(middleware);
 
 // Time
@@ -155,11 +156,11 @@ const ObjectParams = function(obj) {
 		id: token(), //sorta uuid
 		forceUpdate: true,
 		sleeping: false,
-		mass: obj.mass,
+		mass: obj.mass || 0,
 	}
 	obj.updateParams = function() {
 		if (obj.params.vehicle_autoFlip == true) {
-			// auto flip 
+			// auto flip
 			if (obj.rotation.y > Math.PI / 2 || obj.rotation.y < -Math.PI / 2) {
 				// obj.setLinearVelocity(new THREE.Vector3());
 				obj.setAngularVelocity(new THREE.Vector3());
@@ -225,6 +226,7 @@ const init = () => {
   countTime(); // time counter
 
 	buildWorld();
+	let plane = new Plane('blue', new THREE.Vector3(0,5,0));
 	setInterval(simulatePhysics, 1000 / 90)
 	// speed
 	updateFPS();
@@ -241,7 +243,7 @@ const countTime = () => {
       blueTeamPoints = 0; // reset points
       io.emit('gameStart'); // Game reset points
     }
-    io.emit("timeLeft", gameTime-elapsed); // time left 
+    io.emit("timeLeft", gameTime-elapsed); // time left
   }, 250);
 }
 
@@ -282,6 +284,76 @@ const makeTank = (color, pos) => {
 	car.hasDriver = false;
 	vehicles.push(car);
 
+}
+
+function Plane(color, position) {
+
+	this.mat = phongMaterial({color});
+
+	this.body = new ObjectParams(
+		new Physijs.BoxMesh(
+			boxGeometry(3,3,6),
+			this.mat,
+			5
+		)
+	);
+
+	this.target = position.clone();
+	this.tolerance = 0.1;
+
+	this.body.blades = new ObjectParams(
+		new THREE.Mesh(
+			boxGeometry(0.5,0.5,12),
+			this.mat,
+		)
+	);
+	this.body.blades.params._doNotSimulate = true; // Is not a physics body
+
+	this.body.position.copy(position);
+	this.hasDriver = false;
+
+	this.update = () => {
+
+
+		// Align
+		if(this.hasDriver === true) { // If being driven
+		this.body.rotation.set(0,0,0);
+		this.body.__dirtyRotation = true;
+		this.body.forceUpdate = true;
+		this.body.blades.rotation.y += 0.10;
+		this.body.blades.forceUpdate = true;
+
+		this.veloc = this.body.getLinearVelocity();
+		if(this.body.position.y < this.target.y-this.tolerance) {
+			this.veloc.y = this.tolerance*50;
+		}
+		if(this.body.position.y > this.target.y+this.tolerance) {
+			this.veloc.y = -this.tolerance*50;
+		}
+		if(this.body.position.x < this.target.x - this.tolerance) {
+			this.veloc.x = this.tolerance*50;
+		}
+		if(this.body.position.x > this.target.x + this.tolerance) {
+			this.veloc.x = -this.tolerance*50;
+		}
+		if(this.body.position.z < this.target.z - this.tolerance) {
+			this.veloc.z = this.tolerance*50;
+		}
+		if(this.body.position.z > this.target.z+this.tolerance) {
+			this.veloc.z = -this.tolerance*50;
+		}
+		this.body.setLinearVelocity(this.veloc);
+	}
+
+
+		this.body.blades.position.copy(this.body.position).add(new THREE.Vector3(0,2,0));
+	}
+
+	scene.add(this.body.blades);
+	scene.add(this.body);
+
+	planes.push(this);
+	return this;
 }
 
 
@@ -328,13 +400,21 @@ const simulatePhysics = () => {
     }
 		for (let plyr of players) {
 			if (plyr.driving != undefined) {
-				// is driving, tie player to object 
+				// is driving, tie player to object
 				plyr.obj.position.set(
 					plyr.driving.mesh.position.x,
 					plyr.driving.mesh.position.y + 1.5,
 					plyr.driving.mesh.position.z,
 				);
-				// update physics body 
+				// update physics body
+				plyr.obj.__dirtyPosition = true;
+			}
+			if(plyr.flying != undefined) { // Tie to plane
+				plyr.obj.position.set(
+					plyr.flying.body.position.x,
+					plyr.flying.body.position.y+1.5,
+					plyr.flying.body.position.z,
+				);
 				plyr.obj.__dirtyPosition = true;
 			}
 			let cla = new THREE.Vector3().copy(plyr.obj.getLinearVelocity()).clamp(new THREE.Vector3(-5, -100, -5), new THREE.Vector3(5, 60, 5));// clamp it
@@ -358,6 +438,11 @@ const simulatePhysics = () => {
         }
       }
 		}
+		// Update planes
+		for(let plane of planes) {
+			plane.update();
+		}
+
     // update bases
     for(let be of bases) {
       if(be.players.length > 0) {
@@ -378,7 +463,7 @@ const simulatePhysics = () => {
         }
         be.label.setTeam(be.team); // set label color
         // Add points
-        
+
       }
       if(be.team != undefined) {
           if(be.team === 'red') {
@@ -453,6 +538,7 @@ io.on('connection', (socket) => {
 		driving: undefined,
     nameSet: false,
     teamSet: false,
+		flying: undefined,
 	});
   let theTempPlayerGeo = boxGeometry(1,2,1);
   theTempPlayerGeo.computeBoundingSphere = () => {theTempPlayerGeo.boundingSphere = {radius:1}};
@@ -510,7 +596,7 @@ io.on('connection', (socket) => {
 				io.emit('chat', "[" + (plyr.name ? plyr.name : plyr.id) + "] " + msg); //broadcast
 			}
 		} else {
-			msgDelay *= 2; // slower 
+			msgDelay *= 2; // slower
 			lastMsgTime = performance.now();
 			if (msgDelay > 5000) msgDelay = 5000;
 			socket.emit('chat', "[System] Woah, slow down! You need to wait " + ((msgDelay / 1000).toFixed(2)) + "s to send another message.");
@@ -616,15 +702,68 @@ io.on('connection', (socket) => {
 		} else {
 			socket.emit('client_controlVehicle_error', 'no_vehicle')
 		}
-	})
+	});
+
+	socket.on('client_controlPlane', (diff) => {
+		if(plyr.flying != undefined) {
+			plyr.flying.target.add(diff);
+	} else {
+		socket.emit('client_controlPlane_error', 'no_plane');
+	}
+});
+
+socket.on('client_drivePlane', () => {
+	let reach = 4;
+	if(plyr.driving === undefined && plyr.flying == undefined) {
+		for(let plane of planes) {
+			if(plane.body.position.distanceTo(plyr.obj.position) < reach && plane.hasDriver == false) {
+				plane.hasDriver = true;
+				plyr.flying = plane;
+
+				// set plane color
+				let plyrColor = plyr.team == 'blue' ? {r:0,b:1,g:0} : {r:1,g:0,b:0};
+				if(plane.body.params.material.color != plyrColor) {
+					plane.body.params.material.color = plyrColor;
+					plane.body.params.id = token();
+					plane.body.blades.params.material.color = plyrColor;
+					plane.body.blades.params.id = token();
+				}
+
+			}
+		}
+	 }
+	 if(plyr.flying != undefined) {
+		 socket.emit('client_drivePlane', true);
+	 } else {
+		 socket.emit('client_drivePlane_error', undefined);
+	 }
+});
+
+socket.on('client_exitPlane', ()=> {
+	if(plyr.flying != undefined) {
+		plyr.flying.hasDriver = false;
+		plyr.flying = undefined;
+		socket.emit('client_drivePlane', false);
+	}
+});
+
+socket.on('client_deletePlane', () => {
+	if(plyr.flying != undefined) {
+		planes.splice(planes.indexOf(plyr.flying), 1); // remove from update loop
+		scene.remove(plyr.flying.body);
+		scene.remove(plyr.flying.blades);
+		plyr.flying = undefined;
+		socket.emit('client_drivePlane', false);
+	}
+})
 
 	// sit in vehicle
-	socket.on('client_driveVehicle', (reach) => {
-		if (reach == undefined) reach = 3;
+	socket.on('client_driveVehicle', () => {
+		let reach = 4;
 		if (plyr.driving == undefined) {
 			for (let car of vehicles) {
 				// is it close?
-				if (car.mesh.position.distanceTo(plyr.obj.position) < 3 && car.hasDriver == false && plyr.driving == undefined) {
+				if (car.mesh.position.distanceTo(plyr.obj.position) < reach && car.hasDriver == false && plyr.driving == undefined) {
 					car.hasDriver = true;
 					plyr.driving = car; // is driving this
 					// set car color
@@ -741,7 +880,7 @@ io.on('connection', (socket) => {
 			obj.rotation.set(rotation.x, rotation.y, rotation.z);
 			obj.updateParams();
 			obj.params.forceUpdate = true;
-    
+
 			scene.add(obj);
       if(linv) {
         obj.setLinearVelocity(new THREE.Vector3(linv.x,linv.y,linv.z));
