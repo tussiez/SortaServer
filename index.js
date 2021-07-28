@@ -382,10 +382,10 @@ const simulatePhysics = () => {
       }
       if(be.team != undefined) {
           if(be.team === 'red') {
-            redTeamPoints+=0.5/(1000/fps);
+            redTeamPoints+=0.5/(5000/fps);
           }
           if(be.team === 'blue') {
-            blueTeamPoints += 0.5/(1000/fps);
+            blueTeamPoints += 0.5/(5000/fps);
           }
         }
     }
