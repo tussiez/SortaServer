@@ -376,26 +376,31 @@ const controlVehicle = () => {
 
 const controlPlane = () => {
   let vec = new THREE.Vector3();
-  if(keys.has('q')) {
-    vec.y = -0.5;
-  }
-  if(keys.has('e')) {
-    vec.y = 0.5;
-  }
   if(keys.has('w')) {
-    vec.x += 0.5;
+    let moveFwd = controls.moveForward(0.1,true);
+    vec.add(moveFwd);
   }
   if(keys.has('s')) {
-    vec.x -= 0.5;
+    let moveBwd = controls.moveForward(-0.1,true);
+    vec.add(moveBwd);
   }
   if(keys.has('a')) {
-    vec.z -= 0.5;
+    let moveLeft = controls.moveRight(-0.1,true);
+    vec.add(moveLeft);
   }
   if(keys.has('d')) {
-    vec.z+=0.5;
+    let moveRight = controls.moveRight(0.1,true);
+    vec.add(moveRight);
   }
-  vec.multiplyScalar(2);
+  if(keys.has('q')) {
+    vec.y = -0.2;
+  }
+  if(keys.has('e')) {
+    vec.y = 0.2;
+  }
+  if(vec.x != 0 && vec.y != 0 && vec.z != 0) {
   socket.emit('client_controlPlane', vec);
+}
 }
 
 const movePlayer = () => {

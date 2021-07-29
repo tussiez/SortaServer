@@ -51,10 +51,10 @@ let PointerLockControls = function (camera, domElement, socket) {
     };
   }();
 
-  this.moveForward = function (distance) {
+  this.moveForward = function (distance,out) {
     if(scope.isLocked == true) {
 
-    
+
     // move forward parallel to the xz-plane
     // assumes camera.up is y-up
 
@@ -66,20 +66,28 @@ let PointerLockControls = function (camera, domElement, socket) {
     //v.addScaledVector(vec, distance);
 
     // update
+    if(out === undefined) {
     scope.velocDir.addScaledVector(vec,distance);
     socket.volatile.emit('client_addVelocity', vec,distance, Math.abs(distance))
+  } else {
+    return vec.clone().multiplyScalar(distance);
+  }
     }
 
   };
 
-  this.moveRight = function (distance) {
+  this.moveRight = function (distance,out) {
     if(scope.isLocked == true) {
     vec.setFromMatrixColumn(camera.matrix, 0);
     //var v = new Vector3() //.copy(scope.lastVelocity);
     //v.addScaledVector(vec, distance);
+    if(out === undefined) {
         scope.velocDir.addScaledVector(vec,distance);
 
     socket.volatile.emit('client_addVelocity',vec,distance, Math.abs(distance))
+  } else {
+    return vec.clone().multiplyScalar(distance);
+  }
     }
   };
 

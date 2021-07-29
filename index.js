@@ -17,6 +17,23 @@ let blueTeamPoints = 0;
 let planes = [];
 io.use(middleware);
 
+// Utility functions
+const tol = (a,b,tolerance) => {
+  return a > b-tolerance && a < b+tolerance;
+}
+
+const tolv = (a,b,tolerance) => {
+  return tol(a.x,b.x,tolerance) === true && tol(a.y,b.y,tolerance) === true && tol(a.z,b.z,tolerance) === true;
+}
+
+const easing = (a,b,speed) => {
+  return ((b-a)*speed);
+}
+
+const easingv = (a,b,speed) => {
+  return {x: easing(a.x,b.x,speed), y: easing(a.y,b.y,speed), z: easing(a.z,b.z,speed)};
+}
+
 // Time
 let gameTime = (15*60)*1000; // 15 min * 60 = sec * 1000 = msec
 let startTime = 0; // start time for counting
@@ -299,7 +316,7 @@ function Plane(color, position) {
 	);
 
 	this.target = position.clone();
-	this.tolerance = 0.1;
+	this.tolerance = 0.01;
 
 	this.body.blades = new ObjectParams(
 		new THREE.Mesh(
@@ -316,7 +333,7 @@ function Plane(color, position) {
 
 
 		// Align
-		if(this.hasDriver === true) { // If being driven
+		if(this.hasDriver == true) { // If being driven
 		this.body.rotation.set(0,0,0);
 		this.body.__dirtyRotation = true;
 		this.body.forceUpdate = true;
@@ -324,25 +341,12 @@ function Plane(color, position) {
 		this.body.blades.forceUpdate = true;
 
 		this.veloc = this.body.getLinearVelocity();
-		if(this.body.position.y < this.target.y-this.tolerance) {
-			this.veloc.y = this.tolerance*50;
+		if(!tol(this.body.position.clone().y,this.target.clone().y, this.tolerance)) {
+			this.veloc.y += easing(this.body.position.clone().y, this.target.clone().y, 0.1)/2;
 		}
-		if(this.body.position.y > this.target.y+this.tolerance) {
-			this.veloc.y = -this.tolerance*50;
-		}
-		if(this.body.position.x < this.target.x - this.tolerance) {
-			this.veloc.x = this.tolerance*50;
-		}
-		if(this.body.position.x > this.target.x + this.tolerance) {
-			this.veloc.x = -this.tolerance*50;
-		}
-		if(this.body.position.z < this.target.z - this.tolerance) {
-			this.veloc.z = this.tolerance*50;
-		}
-		if(this.body.position.z > this.target.z+this.tolerance) {
-			this.veloc.z = -this.tolerance*50;
-		}
+		this.veloc.add(new THREE.Vector3(this.target.x,0,this.target.z).divideScalar(10));
 		this.body.setLinearVelocity(this.veloc);
+	} else {
 	}
 
 
@@ -706,7 +710,9 @@ io.on('connection', (socket) => {
 
 	socket.on('client_controlPlane', (diff) => {
 		if(plyr.flying != undefined) {
-			plyr.flying.target.add(diff);
+      plyr.flying.target.y+= diff.y;
+      plyr.flying.target.x = diff.x;
+      plyr.flying.target.z = diff.z;
 	} else {
 		socket.emit('client_controlPlane_error', 'no_plane');
 	}
@@ -719,6 +725,8 @@ socket.on('client_drivePlane', () => {
 			if(plane.body.position.distanceTo(plyr.obj.position) < reach && plane.hasDriver == false) {
 				plane.hasDriver = true;
 				plyr.flying = plane;
+        plyr.flying.target.set(0,0,0);
+				plyr.flying.target.y = plane.body.position.clone().y;
 
 				// set plane color
 				let plyrColor = plyr.team == 'blue' ? {r:0,b:1,g:0} : {r:1,g:0,b:0};
@@ -1187,6 +1195,28 @@ const makeTankSpawner = (pos, color) => {
 	})
 }
 
+const makePlaneSpawner = (pos, color) => {
+	let obj = new ObjectParams(
+		new Physijs.BoxMesh(
+			boxGeometry(1,1,0.25),
+			phongMaterial({color}),
+			0,
+		)
+	);
+	obj.rotation.set(Math.PI/2, 0,0);
+	obj.position.copy(pos);
+	scene.add(obj);
+	obj.lastClicked = performance.now();
+	obj.addEventListener('collision', (other) => {
+		if(other.params && other.params.playerId) {
+			if(performance.now() - obj.lastClicked > 5000) {
+				obj.lastClicked = performance.now();
+				let pln = new Plane(color,new THREE.Vector3(0,4,0).add(pos));
+			}
+		}
+	});
+}
+
 const createLights = () => {
 	let main = new ObjectParams(
 		spotLight(0xffffff, 0.7)
@@ -1206,6 +1236,8 @@ const buildWorld = () => {
 	makeBaseBlue(125, 0, 125);
 	makeTankSpawner(new THREE.Vector3(106, 0.125, 127), 'blue');
 	makeTankSpawner(new THREE.Vector3(-144, 0.125, -126), 'red');
+	makePlaneSpawner(new THREE.Vector3(108, 0.125, 127), 'blue');
+	makePlaneSpawner(new THREE.Vector3(-146, 0.125, -126), 'red');
 	createLights();
 	// red/blue vehicle spawners
 }
