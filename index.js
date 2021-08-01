@@ -243,7 +243,7 @@ const init = () => {
   countTime(); // time counter
 
 	buildWorld();
-	let plane = new Plane('blue', new THREE.Vector3(0,5,0));
+//	let plane = new Plane('blue', new THREE.Vector3(0,5,0));
 	setInterval(simulatePhysics, 1000 / 90)
 	// speed
 	updateFPS();
