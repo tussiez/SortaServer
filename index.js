@@ -337,24 +337,28 @@ function Plane(color, position) {
 		this.body.rotation.set(0,0,0);
 		this.body.__dirtyRotation = true;
 		this.body.forceUpdate = true;
-		this.body.blades.rotation.y += 0.10;
+		this.body.blades.rotation.set(0,this.body.blades.rotation.y+0.10,0);
 		this.body.blades.forceUpdate = true;
 
 		this.veloc = this.body.getLinearVelocity();
 		if(!tol(this.body.position.clone().y,this.target.clone().y, this.tolerance)) {
 			this.veloc.y += easing(this.body.position.clone().y, this.target.clone().y, 0.1)/2;
 		}
-		this.veloc.add(new THREE.Vector3(this.target.x,0,this.target.z).divideScalar(10));
+		this.veloc.add(new THREE.Vector3(this.target.x,0,this.target.z).divideScalar(5));
 		this.body.setLinearVelocity(this.veloc);
+    this.body.setLinearFactor(new THREE.Vector3(1,0,1)); // Physics factor
 	} else {
 	}
 
 
 		this.body.blades.position.copy(this.body.position).add(new THREE.Vector3(0,2,0));
+    this.body.setLinearFactor(new THREE.Vector3(1,1,1)); // Physics factor
+    this.body.blades.rotation.set(this.body.rotation.x,this.body.blades.rotation.y,this.body.blades.rotation.z);
 	}
 
 	scene.add(this.body.blades);
 	scene.add(this.body);
+
 
 	planes.push(this);
 	return this;
@@ -428,8 +432,8 @@ const simulatePhysics = () => {
       if(plyr.teamSet === true) {
         // check if in other base
         let po = plyr.team === 'blue' ? new THREE.Vector3(-125,0,-125) : new THREE.Vector3(125,0,125);
-        if(plyr.obj.position.distanceTo(po) < 25) { // cannot get into enemy base
-          plyr.obj.position.set(0,0,0); // send back
+        if(plyr.obj.position.distanceTo(po) < 30) { // cannot get into enemy base
+          plyr.obj.position.set(0,5,0); // send back
           plyr.obj.forceUpdate = true;
           plyr.obj.__dirtyPosition = true;
         }
@@ -757,9 +761,10 @@ socket.on('client_exitPlane', ()=> {
 
 socket.on('client_deletePlane', () => {
 	if(plyr.flying != undefined) {
+    scene.remove(plyr.flying.body);
+    scene.remove(plyr.flying.body.blades);
 		planes.splice(planes.indexOf(plyr.flying), 1); // remove from update loop
-		scene.remove(plyr.flying.body);
-		scene.remove(plyr.flying.blades);
+
 		plyr.flying = undefined;
 		socket.emit('client_drivePlane', false);
 	}
@@ -1236,8 +1241,8 @@ const buildWorld = () => {
 	makeBaseBlue(125, 0, 125);
 	makeTankSpawner(new THREE.Vector3(106, 0.125, 127), 'blue');
 	makeTankSpawner(new THREE.Vector3(-144, 0.125, -126), 'red');
-	makePlaneSpawner(new THREE.Vector3(108, 0.125, 127), 'blue');
-	makePlaneSpawner(new THREE.Vector3(-146, 0.125, -126), 'red');
+	makePlaneSpawner(new THREE.Vector3(106, 0.125, 131), 'blue');
+	makePlaneSpawner(new THREE.Vector3(-144, 0.125, -130), 'red');
 	createLights();
 	// red/blue vehicle spawners
 }
