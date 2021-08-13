@@ -6,26 +6,26 @@ Maks aa car goo
 
 const Vehicle = function (Physijs, scene, Vector3, ObjectParams) {
   this.Car = (options) => {
-    const { 
+    const {
       carMesh,
       minSteering,
       maxSteering,
       brakePower,
-      wheelGeometry, 
-      wheelMaterial, 
-      suspensionStiffness, 
-      suspensionCompression, 
-      suspensionDamping, 
-      suspensionTravel, 
-      suspensionSlip, 
-      suspensionMaxForce, 
-      wheelOffset1, 
-      wheelY, 
-      wheelOffset2, 
-      wheelSuspensionHeight, 
-      wheelRadius, 
-      enginePower, 
-      steeringDamping, 
+      wheelGeometry,
+      wheelMaterial,
+      suspensionStiffness,
+      suspensionCompression,
+      suspensionDamping,
+      suspensionTravel,
+      suspensionSlip,
+      suspensionMaxForce,
+      wheelOffset1,
+      wheelY,
+      wheelOffset2,
+      wheelSuspensionHeight,
+      wheelRadius,
+      enginePower,
+      steeringDamping,
       steeringReturnDamping,
       maxEngineRPM,
       transmissionMaxGear,
@@ -77,7 +77,7 @@ const Vehicle = function (Physijs, scene, Vector3, ObjectParams) {
     car.maxThrottle = 1;
     car.gearShiftRPM = transmissionGearShiftRPM || [1500, 2000, 2500, 3000, 3500]; // stepped
     car.gearPowerMult = transmissionGearPowerMult || [1, 1.5, 2, 2.5, 3];
-    
+
     car.rpm = 1000; // 1000rpm start
     car.isManual = false;
 
@@ -106,7 +106,7 @@ const Vehicle = function (Physijs, scene, Vector3, ObjectParams) {
         wheelSuspensionHeight,
         wheelRadius,
         i < 2,
-        
+
       );
 
     }
@@ -120,9 +120,9 @@ const Vehicle = function (Physijs, scene, Vector3, ObjectParams) {
           car.gear += 1;
           if(car.rpm-(car.gearShiftRPM[car.gear]) >= 1000) { // > idle rpm
             car.rpm -= car.gearShiftRPM[car.gear]; // reduce rpm
-            
+
             // improve perf
-          } 
+          }
         }
       }
       if(dir === -1) {
@@ -156,7 +156,7 @@ const Vehicle = function (Physijs, scene, Vector3, ObjectParams) {
         car.throttleHoldTime += 0.04;
         if(car.throttleHoldTime > 1) car.throttleHoldTime = 1;
         car.throttle += (car.enginePower/500)*(car.throttleHoldTime);
-        car.rpm += ((car.enginePower*5)*(car.throttleHoldTime))/(car.gearShiftRPM[car.gear]/1000)*(car.speed/2);
+        car.rpm += ((car.enginePower*3)*(car.throttleHoldTime))/(car.gearShiftRPM[car.gear]/1000)*(car.speed/2);
         if(car.rpm > car.maxEngineRPM) car.rpm = car.maxEngineRPM; // capped
         if(car.throttle > 1) car.throttle = 1;
       } else {
@@ -173,28 +173,30 @@ const Vehicle = function (Physijs, scene, Vector3, ObjectParams) {
       // GEAR SWITCH
       if(car.isManual === false) { //
       let range = car.gearShiftRPM[car.gear+1] != undefined ? car.gearShiftRPM[car.gear+1] - car.gearShiftRPM[car.gear] : 500;
-      if(car.speed > (car.gearShiftRPM[car.gear]+range)/350) {
-        if(car.gearShiftRPM[car.gear+1]) {
-          // can shift up
-          car.gear += 1;
-          if(car.rpm-(car.gearShiftRPM[car.gear]) >= 1000) { // > idle rpm
-            car.rpm -= car.gearShiftRPM[car.gear]; // reduce rpm
-            
-            // improve perf
-          } 
-        }
-        
-      }
-      if(car.speed < (car.gearShiftRPM[car.gear]-range)/750) {
+      if(car.speed < (car.gearShiftRPM[car.gear]-(range/1.55))/600) {
         // shift down
         if(car.gearShiftRPM[car.gear-1]) {
+          if(car.rpm+car.gearShiftRPM[car.gear]/8 < car.maxEngineRPM) {
           car.rpm += car.gearShiftRPM[car.gear]/8;
           car.gear -= 1;
         }
+        }
       }
+      if(car.speed > (car.gearShiftRPM[car.gear]+range)/850) {
+        if(car.gearShiftRPM[car.gear+1]) {
+          // can shift up
+          if(car.rpm-(car.gearShiftRPM[car.gear]) >= 800) { // > idle rpm
+            car.rpm -= car.gearShiftRPM[car.gear]/3; // reduce rpm
+            car.gear+=1;
+            // improve perf
+          }
+        }
+
+      }
+
       }
       // console.log('GEAR: '+ car.gear +' RPM:' + car.rpm);
-      
+
 
       if (car.force.power == true) {
         car.applyEngine(car.throttle*car.enginePower*car.gearPowerMult[car.gear]);
@@ -233,14 +235,14 @@ const Vehicle = function (Physijs, scene, Vector3, ObjectParams) {
       if(!car.speedSamples) car.speedSamples = [];
       car.speedSamples.push(car.mesh.position.distanceTo(car.mesh._vehicleLastPosition)*1000/fps);
       if(car.speedSamples.length > fps) car.speedSamples.shift();
-      
+
       let someCounter = 0;
       for(let sp of car.speedSamples) someCounter+=sp;
       car.speed = someCounter/car.speedSamples.length; //for fps variation
 
       car.mesh._vehicleLastPosition.copy(car.mesh.position);
     }
-    
+
     return car;
   }
 };

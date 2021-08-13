@@ -289,11 +289,11 @@ const makeTank = (color, pos) => {
 		wheelRadius: 1.2,
 		steeringDamping: 40,
 		steeringReturnDamping: 0.1,
-		maxEngineRPM: 9000, // max rpm
+		maxEngineRPM: 7000, // max rpm
 		transmissionMaxGear: 9, // speed
 		transmissionGearShiftRPM: [1000, 1100, 1250, 1400, 1650, 2150, 2400, 2750, 3300, 4050], // gear shift
-		transmissionGearPowerMult: [1, 1.25, 1.5, 1.75, 2, 2.25, 3, 3.5, 4, 14.5].reverse(), // 1st gear is strongest (reverse), last gear has weakest power
-		speedCap: 24,
+		transmissionGearPowerMult: [1, 1.9, 2, 2.25, 2.5, 3, 3.5, 4, 4.5, 14.5].reverse(), // 1st gear is strongest (reverse), last gear has weakest power
+		speedCap: 30,
 	});
 	car.mesh.position.set(pos.x, pos.y, pos.z);
 	car.mesh.__dirtyPosition = true; // update (after adding to scene)
