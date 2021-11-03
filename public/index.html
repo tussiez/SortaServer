@@ -103,7 +103,7 @@
           margin: 4px;
           padding: 4px;
         }
-        #driving_controls {
+        #driving_controls, #flying_controls {
           height: 38%;
           width: 20%;
           z-index: 2;
@@ -127,7 +127,7 @@
         #driving_controls button {
           font-size: 1vw;
         }
-        
+
         #page1 {
           display: block;
         }
@@ -252,11 +252,11 @@ td,tr, th {
   float: right;
 }
 @keyframes spin {
-  0% { 
+  0% {
   transform: rotateZ(0deg) rotateY(0deg) rotateX(0deg);
  }
  50% {transform: rotateZ(180deg) rotateY(270deg) rotateX(270deg)}
-  100% { 
+  100% {
   transform: rotateZ(0deg) rotateY(360deg) rotateX(0deg);
  }
 }
@@ -267,7 +267,7 @@ td,tr, th {
     </head>
 <canvas id="textCanvas"></canvas>
     <div id="header">
-      <span>Armored Patrol 0.5</span>
+      <span>Armored Patrol 0.55</span>
     </div>
     <div class="point">
       <table id="pointCount">
@@ -323,13 +323,13 @@ td,tr, th {
 
 
         <p> Once you've finished, hit <button onclick="if(document.getElementById('username').value != '' && document.getElementById('blueteambt').disabled == true || document.getElementById('redteambt').disabled == true && document.getElementById('username').value != '' && document.getElementById('username').value.length <= 12) {window.setPlayerInfo(document.getElementById('username').value, document.getElementById('blueteambt').disabled == true ? 'blue' : 'red')} else {alert('Type a username and choose a team first! \n Your name can only be up to twelve characters long.')}" id="playbt" disabled="true">Play</button> to start!</p>
-        
+
         </div>
-      
+
       </div>
       <div class="centered" id="page1">
       <div class="inner">
-        
+
       <h3>Armored Patrol!<span style="float: right;font-size: 16px"><b><a href="#!"style="color:white"onclick="document.getElementById('page1').style.display='none';document.getElementById('page2').style.display='block'">Next</a></b></span></h3>
       <p>This is a browser-based ripoff of "Armored Patrol 0.9", a Roblox game. Initally developed as a demo of <a href="https://replit.com/@tussiez">@tussiez</a>'s multiplayer physics engine.</p>
       <b>Description</b>
@@ -343,6 +343,13 @@ td,tr, th {
     <div id="chatbox">
       <Div id="chatbox_inner" class="inner"></div>
       <input type="text" id="chatbox_input" onkeydown="window.sendMessage(event)" placeholder="Click here or press / to type">
+    </div>
+    <div id="flying_controls">
+      <div class="inner">
+      Helicopter Controls<hr>
+      <b>WASD</b> to move. <b>E/Q</b> to change altitude. <b>Space</b> to exit.<br>
+      <button onclick="window.removePlane()">DELETE</button>
+    </div>
     </div>
     <div id="driving_controls">
       <div class="inner">
@@ -367,7 +374,7 @@ td,tr, th {
     <div id="info">
       <!-- <input type="text" placeholder="Run command here.." onkeydown="runCommand(this.value,event)"> -->
      <!-- <div id="inf2"></div> -->
-      <div id="logger"></div> 
+      <div id="logger"></div>
     </div>
     <script src="lib/physi_three.js"></script>
     <script src="/tween.js"></script>
