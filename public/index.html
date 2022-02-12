@@ -52,6 +52,7 @@
           z-index: 999;
           overflow: auto;
         }
+       
         .centered {
           position: relative;
           left: 35%;
@@ -59,6 +60,12 @@
           height: 30%;
           width: 30%;
           transition: 0.5s;
+        }
+         @media only screen and (max-width: 768px) {
+          .centered {
+            width: 75%;
+            left: 12.5%;
+          }
         }
         a {
           color: gray;
@@ -253,11 +260,10 @@ td,tr, th {
 }
 @keyframes spin {
   0% {
-  transform: rotateZ(0deg) rotateY(0deg) rotateX(0deg);
+  transform: rotateZ(0deg);
  }
- 50% {transform: rotateZ(180deg) rotateY(270deg) rotateX(270deg)}
   100% {
-  transform: rotateZ(0deg) rotateY(360deg) rotateX(0deg);
+  transform: rotateZ(360deg);
  }
 }
 </style>
@@ -265,6 +271,13 @@ td,tr, th {
 
 
     </head>
+       <script type="importmap">
+      {
+      "imports": {
+        "three": "https://threejs.org/build/three.module.js"
+      }
+      }
+    </script>
 <canvas id="textCanvas"></canvas>
     <div id="header">
       <span>Armored Patrol 0.55</span>

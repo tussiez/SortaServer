@@ -9,9 +9,10 @@ import {GLTFLoader} from 'https://threejs.org/examples/jsm/loaders/GLTFLoader.js
 
 if(window !== window.parent) {
   //Template literals are better - Baocnman321
-  document.body.innerHTML = `
+ /* document.body.innerHTML = `
   <h1>This breaks in Repl.it</h1>
   <p>Open <a href="${window.location.href}" target="_blank">this</a> in a new tab.</p>`;
+  */ // Fix for SortaScience
 } else {
 
 const globalInfo = {
